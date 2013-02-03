@@ -10,8 +10,9 @@ import threading
 import time
 import sys
 import random
+from evdev import InputDevice, list_devices, categorize, ecodes
 
-direction = 'Forward'	# Forward, Pause, Right, Left
+direction = 'Pause'	# Forward, Pause, Right, Left, Backward, BackRight, BackLeft
 mouse_click = False
 stop_listen = False
 enableA = 1
@@ -19,43 +20,62 @@ enableB = 6
 
 h1 = 15
 h2 = 16
-h3 = 10
-h4 = 11
+h3 = 11
+h4 = 10
+
+obsA = 14
+obsB = 7
+
 
 class MouseListener(threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)
-		self.fd = open('/dev/input/mouse0', 'r')
 
 	def run(self):
 		global direction
 		global stop_listen
 		global mouse_click
-		while 1:
-			if stop_listen == True:
-				break
 
-			buttons, dx, dy = map(ord, self.fd.read(3))
+		dev = InputDevice('/dev/input/event1')
+		print(dev)
+
+		for event in dev.read_loop():
+			#print event
 			mouse_click = True
 
-			if buttons == 0x9 and dx == 0 and dy == 0:
-				print 'left pressed'
+			if event.code == 272 and event.type == 1 and event.value == 0 :
+				print 'Left press'
 				if direction == 'Forward':
 					direction = 'Left'
 				elif direction == 'Right':
 					direction = 'Forward'
-			elif buttons == 0xa and dx == 0 and dy == 0:
-				print 'right pressed'
+			if event.code == 273 and event.type == 1 and event.value == 0 :
+				print 'Right press'
 				if direction == 'Forward':
 					direction = 'Right'
 				elif direction == 'Left':
 					direction = 'Forward'
-			elif buttons == 0xc and dx == 0 and dy == 0:
-				print 'middle pressed'
-				if direction == 'Forward' or direction == 'Right' or direction == 'left':
+			if event.code == 274 and event.type == 1 and event.value == 0 :
+				print 'Middle press'
+				if direction == 'Forward' or direction == 'Right' or direction == 'left' or direction == 'Backward':
 					direction = 'Pause'
 				else:
 					direction = 'Forward'
+			if event.code == 8 and event.type == 2 and event.value == 1 :
+				print 'scroll up'
+				if direction == 'Pause':
+					direction = 'Forward'
+				elif direction == 'Backward':
+					direction = 'Pause'
+			if event.code == 8 and event.type == 2 and event.value == -1 :
+				print 'scroll down'
+				if direction == 'Pause':
+					direction = 'Backward'
+				elif direction == 'Forward':
+					direction = 'Pause'
+
+			if stop_listen == True:
+				break
 
 
 def startMouse():
@@ -70,6 +90,14 @@ def forward():
 	wiringpi.softPwmWrite(enableB, 200)
 	wiringpi.digitalWrite(h3, 0)
 	wiringpi.digitalWrite(h4, 1)
+
+def backward():
+	wiringpi.softPwmWrite(enableA, 200)
+	wiringpi.digitalWrite(h1, 1)
+	wiringpi.digitalWrite(h2, 0)
+	wiringpi.softPwmWrite(enableB, 200)
+	wiringpi.digitalWrite(h3, 1)
+	wiringpi.digitalWrite(h4, 0)
 
 def stop():
 	wiringpi.softPwmWrite(enableA, 0)
@@ -102,13 +130,45 @@ wiringpi.pinMode(h3, 1)
 wiringpi.pinMode(h4, 1)
 wiringpi.softPwmCreate(enableA, 0, 255)
 wiringpi.softPwmCreate(enableB, 0, 255)
+wiringpi.pinMode(obsA, wiringpi.INPUT)
+wiringpi.pinMode(obsB, wiringpi.INPUT)
 
 
 mthread = startMouse()
 
 while True:
-	if mouse_click == True:
-		mouse_click = False
+	valueA = wiringpi.digitalRead(obsA)
+	valueB = wiringpi.digitalRead(obsB)
+
+	print 'obsA:', valueA, 'obsB:', valueB
+
+	if valueA == 0 or valueB == 0:
+		if direction == 'Pause':
+			stop()
+		else:
+			turnLeft()
+			sleep(1)
+			forward()
+			direction = 'Forward'
+	else:
+		if mouse_click == False:
+			if direction != 'Pause' and direction != 'Backward' :
+				ran = random.randint(1, 6)
+				if ran == 1:
+					if direction == 'Forward':
+						direction = 'Left'
+					elif direction == 'Right':
+						direction = 'Forward'
+				elif ran == 2:
+					if direction == 'Forward':
+						direction = 'Right'
+					elif direction == 'Left':
+						direction = 'Forward'
+				else:
+					direction = 'Forward'
+		else:
+			mouse_click = False
+
 		if direction == 'Forward':
 			forward()
 		elif direction == 'Pause':
@@ -117,26 +177,8 @@ while True:
 			turnLeft()
 		elif direction == 'Right':
 			turnRight()
-	else:
-		if direction != 'Pause' :
-			ran = random.randint(1, 6)
-			if ran == 1:
-				if direction == 'Forward':
-					direction = 'Left'
-					turnLeft()
-				elif direction == 'Right':
-					direction = 'Forward'
-					forward()
-			elif ran == 2:
-				if direction == 'Forward':
-					direction = 'Right'
-					turnRight()
-				elif direction == 'Left':
-					direction = 'Forward'
-					forward()
-			else:
-				direction = 'Forward'
-				forward()
+		elif direction == 'Backward':
+			backward()
 
 	try:
 		sleep(1)
