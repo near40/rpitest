@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block body %}
+
+  <body onload="load()">
+    <div style="width:320px;margin:0 auto;">
+      <div id="webcam" style="width:320px;height:240px;background-color:white;">
+      </div>
+      <table border="0" style="width:300px;height:300px;margin: 0 auto;">
+        <tr height="33%">
+          <td width="33%" style="text-align:center;">
+          </td>
+          <td width="33%" style="text-align:center;">
+            <a href="#" onmousedown="set('forward', true);" >
+              <img src="{{ url_for('static', filename="forward.png") }}" style="border:none;" />
+            </a>
+          </td>
+          <td width="33%" style="text-align:center;">
+          </td>
+        </tr>
+        <tr height="33%">
+          <td width="33%" style="text-align:center;">
+            <a href="#" onmousedown="set('left', true);" >
+              <img src="{{ url_for('static', filename="left.png") }}" style="border:none;" />
+            </a>
+          </td>
+          <td width="33%" style="text-align:center;">
+            <a href="#" onmousedown="stop();" >
+              <img src="{{ url_for('static', filename="stop.png") }}" style="border:none;" />
+            </a>
+          </td>
+          <td width="33%" style="text-align:center;">
+            <a href="#" onmousedown="set('right', true);" >
+              <img src="{{ url_for('static', filename="right.png") }}" style="border:none;" />
+            </a>
+          </td>
+        </tr>
+        <tr height="33%">
+          <td width="33%" style="text-align:center;">
+          </td>
+          <td width="33%" style="text-align:center;">
+            <a href="#" onmousedown="set('reverse', true);" >
+              <img src="{{ url_for('static', filename="reverse.png") }}" style="border:none;" />
+            </a>
+          </td>
+          <td width="33%" style="text-align:center;">
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+
+{% endblock %}

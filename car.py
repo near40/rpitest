@@ -84,18 +84,18 @@ def startMouse():
 	return thread
 
 def forward():
-	wiringpi.softPwmWrite(enableA, 200)
+	wiringpi.softPwmWrite(enableA, 255)
 	wiringpi.digitalWrite(h1, 0)
 	wiringpi.digitalWrite(h2, 1)
-	wiringpi.softPwmWrite(enableB, 200)
+	wiringpi.softPwmWrite(enableB, 235)
 	wiringpi.digitalWrite(h3, 0)
 	wiringpi.digitalWrite(h4, 1)
 
 def backward():
-	wiringpi.softPwmWrite(enableA, 200)
+	wiringpi.softPwmWrite(enableA, 255)
 	wiringpi.digitalWrite(h1, 1)
 	wiringpi.digitalWrite(h2, 0)
-	wiringpi.softPwmWrite(enableB, 200)
+	wiringpi.softPwmWrite(enableB, 255)
 	wiringpi.digitalWrite(h3, 1)
 	wiringpi.digitalWrite(h4, 0)
 
@@ -105,20 +105,20 @@ def stop():
 
 
 def turnRight():
-	wiringpi.softPwmWrite(enableA, 200)
-	wiringpi.digitalWrite(h1, 1)
-	wiringpi.digitalWrite(h2, 0)
-	wiringpi.softPwmWrite(enableB, 200)
-	wiringpi.digitalWrite(h3, 0)
-	wiringpi.digitalWrite(h4, 1)
-
-def turnLeft():
-	wiringpi.softPwmWrite(enableA, 200)
+	wiringpi.softPwmWrite(enableA, 255)
 	wiringpi.digitalWrite(h1, 0)
 	wiringpi.digitalWrite(h2, 1)
-	wiringpi.softPwmWrite(enableB, 200)
+	wiringpi.softPwmWrite(enableB, 255)
 	wiringpi.digitalWrite(h3, 1)
 	wiringpi.digitalWrite(h4, 0)
+
+def turnLeft():
+	wiringpi.softPwmWrite(enableA, 255)
+	wiringpi.digitalWrite(h1, 1)
+	wiringpi.digitalWrite(h2, 0)
+	wiringpi.softPwmWrite(enableB, 255)
+	wiringpi.digitalWrite(h3, 0)
+	wiringpi.digitalWrite(h4, 1)
 
 
 wiringpi.wiringPiSetup()
@@ -140,48 +140,33 @@ while True:
 	valueA = wiringpi.digitalRead(obsA)
 	valueB = wiringpi.digitalRead(obsB)
 
-	print 'obsA:', valueA, 'obsB:', valueB
+	#print 'obsA:', valueA, 'obsB:', valueB
 
 	if valueA == 0 or valueB == 0:
 		if direction == 'Pause':
 			stop()
 		else:
+			backward()
+			sleep(0.5)
 			turnLeft()
-			sleep(1)
-			forward()
+			sleep(0.5)
 			direction = 'Forward'
 	else:
-		if mouse_click == False:
-			if direction != 'Pause' and direction != 'Backward' :
-				ran = random.randint(1, 6)
-				if ran == 1:
-					if direction == 'Forward':
-						direction = 'Left'
-					elif direction == 'Right':
-						direction = 'Forward'
-				elif ran == 2:
-					if direction == 'Forward':
-						direction = 'Right'
-					elif direction == 'Left':
-						direction = 'Forward'
-				else:
-					direction = 'Forward'
-		else:
-			mouse_click = False
-
 		if direction == 'Forward':
 			forward()
 		elif direction == 'Pause':
 			stop()
 		elif direction == 'Left':
 			turnLeft()
+			direction = 'Forward'
 		elif direction == 'Right':
 			turnRight()
+			direction = 'Forward'
 		elif direction == 'Backward':
 			backward()
 
-	try:
-		sleep(1)
-	except KeyboardInterrupt:
-		stop_listen = True
-		raise
+		try:
+			sleep(0.1)
+		except KeyboardInterrupt:
+			stop_listen = True
+			raise
